@@ -20,7 +20,9 @@ jobs:
           grep -v '^\s*#' scripts/fotos.txt | while read -r nombre id; do
             [ -z "$nombre" ] && continue
             echo "Descargando $nombre ($id)"
-            curl -fsSL "https://unsplash.com/photos/$id/download?force=true" -o "/tmp/$nombre" || { echo "  falló $id"; continue; }
+            url=$(curl -fsSL -A "Mozilla/5.0" "https://unsplash.com/photos/$id" | grep -o 'https://images\.unsplash\.com/photo-[A-Za-z0-9_-]*' | head -1)
+            [ -z "$url" ] && { echo "  no encontré la imagen de $id"; continue; }
+            curl -fsSL "$url?w=1600&q=80&fm=jpg&fit=max" -o "/tmp/$nombre" || { echo "  falló $id"; continue; }
             convert "/tmp/$nombre" -auto-orient -resize '1600x1600>' -strip -quality 78 "public/images/$nombre.jpg"
           done
           ls -la public/images
